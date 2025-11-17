@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Трекер тренировок</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+    <!-- Шапка -->
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">Трекер тренировок</h1>
+            <div class="header-actions" id="headerActions">
+                <button class="btn-login" id="loginBtn">Войти</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Основной контент -->
+    <main class="main">
+        <div class="container">
+            <!-- Левая колонка - Сегодняшняя тренировка -->
+            <div class="today-section">
+                <div class="section-header">
+                    <h2 class="section-title oval-title">Сегодня</h2>
+                    <div class="workout-category" id="todayCategory">Нет тренировки</div>
+                </div>
+                <div class="exercises-list" id="todayExercises">
+                    <p class="no-workout">На сегодня тренировок не запланировано</p>
+                </div>
+            </div>
+
+            <!-- Правая колонка - Неделя -->
+            <div class="week-section">
+                <div class="week-scroll" id="weekScroll">
+                    <!-- Карточки дней недели будут здесь -->
+                </div>
+                
+                <!-- Детальная информация о тренировке -->
+                <div class="workout-detail" id="workoutDetail" style="display: none;">
+                    <h3>Детали тренировки</h3>
+                    <div class="detail-content" id="detailContent">
+                        <!-- Контент будет заполнен JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Подвал -->
+    <footer class="footer">
+        <div class="container">
+            <p>Трекер тренировок</p>
+            <p>Иванов Иван Иванович</p>
+        </div>
+    </footer>
+
+    <!-- Модальные окна -->
+    
+    <!-- Окно входа/регистрации -->
+    <div class="modal" id="authModal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="auth-tabs">
+                <button class="tab-btn active" data-tab="login">Вход</button>
+                <button class="tab-btn" data-tab="register">Регистрация</button>
+            </div>
+            
+            <form class="auth-form active" id="loginForm">
+                <h3>Вход в аккаунт</h3>
+                <input type="email" placeholder="Email" required>
+                <input type="password" placeholder="Пароль" required>
+                <button type="submit" class="btn-primary">Войти</button>
+            </form>
+            
+            <form class="auth-form" id="registerForm">
+                <h3>Регистрация</h3>
+                <input type="text" name="full_name" placeholder="Имя пользователя" required>
+                <input type="email" name="email" placeholder="Email" required>
+                <input type="password" name="password" placeholder="Пароль" required>
+                <button type="submit" class="btn-primary">Зарегистрироваться</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Окно добавления тренировки -->
+    <div class="modal" id="workoutModal">
+        <div class="modal-content large">
+            <span class="close">&times;</span>
+            <h3>Добавить тренировку</h3>
+            <form id="addWorkoutForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Дата</label>
+                        <input type="date" id="workoutDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>День недели</label>
+                        <select id="workoutDay" required>
+                            <option value="">Выберите день</option>
+                            <option value="Понедельник">Понедельник</option>
+                            <option value="Вторник">Вторник</option>
+                            <option value="Среда">Среда</option>
+                            <option value="Четверг">Четверг</option>
+                            <option value="Пятница">Пятница</option>
+                            <option value="Суббота">Суббота</option>
+                            <option value="Воскресенье">Воскресенье</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Категория</label>
+                        <select id="workoutCategory" required>
+                            <option value="">Выберите категорию</option>
+                            <option value="Ноги">Ноги</option>
+                            <option value="Руки">Руки</option>
+                            <option value="Грудь">Грудь</option>
+                            <option value="Спина">Спина</option>
+                            <option value="Плечи">Плечи</option>
+                            <option value="Пресс">Пресс</option>
+                            <option value="Кардио">Кардио</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Время тренировки</label>
+                        <div class="time-inputs">
+                            <input type="time" id="workoutTimeFrom" required>
+                            <span>до</span>
+                            <input type="time" id="workoutTimeTo" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="exercises-section">
+                    <h4>Упражнения</h4>
+                    <div class="exercises-list" id="exercisesContainer">
+                        <!-- Упражнения будут добавляться динамически -->
+                    </div>
+                    <button type="button" class="btn-secondary" id="addExerciseBtn">+ Добавить упражнение</button>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Сохранить тренировку</button>
+                    <button type="button" class="btn-secondary" id="cancelWorkoutBtn">Отмена</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/workout.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

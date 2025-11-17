@@ -41,6 +41,7 @@ services:
       - auth-network
       - db-network
       - trainer-network
+      - frontend-network
 
   trainer-service:
     container_name: "t-service"
@@ -55,6 +56,18 @@ services:
       - auth-network
       - db-network
       - trainer-network
+    
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    container_name: frontend_app
+    restart: unless-stopped
+
+    networks:
+      - auth-network
+      - frontend-network
+      - trainer-network
 
 
 
@@ -65,3 +78,4 @@ networks:
   auth-network:
   db-network:
   trainer-network:
+  frontend-network:
