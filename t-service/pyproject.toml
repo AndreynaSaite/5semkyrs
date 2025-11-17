@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "t-service"
+version = "0.1.0"
+description = ""
+authors = ["ionic101 <iv.osipov2004@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.115.6"
+uvicorn = "^0.34.0"
+pydantic-settings = "^2.7.1"
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.38"}
+alembic = "^1.14.1"
+pydantic = {extras = ["email"], version = "^2.10.5"}
+passlib = "^1.7.4"
+bcrypt = "4.0.1"
+pyjwt = "^2.10.1"
+pytest = "^8.3.4"
+httpx = "^0.28.1"
+pytest-asyncio = "^0.25.2"
+python-logstash = "^0.4.8"
+python-dotenv = "^1.0.1"
+asyncpg = "^0.30.0"
+psycopg2 = "^2.9.10"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
