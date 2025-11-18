@@ -19,18 +19,18 @@ trainer_router: APIRouter = APIRouter(prefix='/client')
 @trainer_router.post('/new_trainer')
 async def new_trainer(trainer_request: NewTrainRequest, db: AsyncSession = Depends(get_session)):
     
-    new_trainer: TrainersModel = TrainersModel(
+    new_trainer = TrainersModel(
         client_id=trainer_request.client_id,
         typetrain=trainer_request.typetrain,
         date_train_time=trainer_request.date_train_time,
         time_train=trainer_request.time_train,
-        number_of_sets=trainer_request.number_of_sets,
-        number_of_repetitions=trainer_request.number_of_repetitions
+        end_time=trainer_request.end_time,
+        exercises=[exercise.dict() for exercise in trainer_request.exercises],
+        is_ready=trainer_request.is_ready
     )
 
     await add_record_db(db, new_trainer)
-
-    return {'status': 'ok'}
+    return {"status": "ok"}
 
 
 

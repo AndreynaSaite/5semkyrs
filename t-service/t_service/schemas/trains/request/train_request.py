@@ -1,11 +1,19 @@
-from pydantic import BaseModel, field_validator, EmailStr
+from pydantic import BaseModel
 from datetime import datetime, time
+from typing import List
+
+
+class Exercise(BaseModel):
+    name: str
+    sets: int
+    reps: int
+
 
 class NewTrainRequest(BaseModel):
     client_id: int
     typetrain: str
     date_train_time: datetime
     time_train: time
-    number_of_sets: int
-    number_of_repetitions: int
-    #jwt: str
+    end_time: time
+    exercises: List[Exercise]
+    is_ready: bool
