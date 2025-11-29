@@ -39,26 +39,19 @@ async def get_my_trains(
     authorization: str = Header(...),
     db: AsyncSession = Depends(get_session)
 ):
-    # ---------------------------
-    # 1. Проверяем и достаём токен
-    # ---------------------------
+
     if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Неверный формат токена")
 
     token = authorization.split(" ")[1]
 
-    # ---------------------------
-    # 2. Декодируем токен
-    # ---------------------------
+
     payload = decode_token(token)
     client_id = payload.get("id")
 
     if not client_id:
         raise HTTPException(status_code=401, detail="Некорректный токен")
 
-    # ---------------------------
-    # 3. Ищем тренировки
-    # ---------------------------
     query = select(TrainersModel).where(TrainersModel.client_id == client_id)
     result = await db.execute(query)
     trains = result.scalars().all()
