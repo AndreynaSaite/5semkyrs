@@ -30,7 +30,7 @@ async def new_trainer(trainer_request: NewTrainRequest, db: AsyncSession = Depen
     )
 
     await add_record_db(db, new_trainer)
-    return {"status": "ok"}
+    return {"status": "ok","id": new_trainer.id}
 
 
 
@@ -67,3 +67,43 @@ async def get_my_trains(
         return {"trains": [], "message": "У клиента пока нет тренировок"}
 
     return trains
+
+
+
+@trainer_router.put("/toggle_ready/{train_id}")
+async def toggle_ready(
+    train_id: int,
+    authorization: str = Header(...),
+    db: AsyncSession = Depends(get_session)
+):
+
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Неверный формат токена")
+
+    token = authorization.split(" ")[1]
+    payload = decode_token(token)
+    client_id = payload.get("id")
+
+    if not client_id:
+        raise HTTPException(status_code=401, detail="Некорректный токен")
+
+    query = select(TrainersModel).where(
+        TrainersModel.id == train_id,
+        TrainersModel.client_id == client_id
+    )
+    result = await db.execute(query)
+    train = result.scalar_one_or_none()
+
+    if not train:
+        raise HTTPException(status_code=404, detail="Тренировка не найдена")
+
+    train.is_ready = not train.is_ready
+
+    await db.commit()
+    await db.refresh(train)
+
+    return {
+        "status": "ok",
+        "train_id": train_id,
+        "new_is_ready": train.is_ready
+    }

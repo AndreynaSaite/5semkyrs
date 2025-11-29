@@ -1,90 +1,112 @@
-// Модуль управления тренировками
+// js/workout.js - полностью обновленная версия
 const WorkoutManager = {
-    workouts: {},
+    workouts: [],
 
     // Инициализация
     init() {
-        this.loadWorkouts();
         this.setupEventListeners();
+        if (Auth.currentUser) {
+            this.loadWorkouts();
+        }
     },
 
     // Загрузка тренировок
     async loadWorkouts() {
-        this.workouts = await this.loadWorkoutsFromServer();
-        this.renderWorkouts();
-        this.renderTodayWorkout();
-    },
-
-    // Сохранение тренировок
-    async saveWorkouts() {
-        await this.saveWorkoutsToServer();
+        try {
+            this.workouts = await this.loadWorkoutsFromServer();
+            this.renderWorkouts();
+            this.renderTodayWorkout();
+        } catch (error) {
+            console.error('Error loading workouts:', error);
+        }
     },
 
     // Загрузка тренировок с сервера
     async loadWorkoutsFromServer() {
-        if (!API.token) return {};
+        if (!API.token) return [];
         
         try {
-            // Здесь будет запрос к API для получения тренировок
-            // Пока используем localStorage как fallback
-            const allWorkouts = Storage.getItem(Storage.KEYS.WORKOUTS) || {};
-            const currentUser = Auth.currentUser;
+            const response = await API.getMyWorkouts();
+            console.log('Workouts from server:', response);
             
-            if (currentUser) {
-                return allWorkouts[currentUser.id] || {};
+            if (response && Array.isArray(response)) {
+                return response.map(train => this.transformTrainData(train));
             }
-            return {};
+            return [];
         } catch (error) {
             console.error('Error loading workouts from server:', error);
-            return {};
+            return [];
         }
     },
 
-    // Сохранение тренировок на сервер
-    async saveWorkoutsToServer() {
-        if (!API.token) return false;
+    // Преобразование данных с сервера в формат фронтенда
+    transformTrainData(train) {
+        const date = new Date(train.date_train_time);
+        const dateString = date.toISOString().split('T')[0];
         
-        try {
-            // Здесь будет запрос к API для сохранения тренировок
-            // Пока сохраняем в localStorage
-            const allWorkouts = Storage.getItem(Storage.KEYS.WORKOUTS) || {};
-            const currentUser = Auth.currentUser;
-            
-            if (currentUser) {
-                allWorkouts[currentUser.id] = this.workouts;
-                Storage.setItem(Storage.KEYS.WORKOUTS, allWorkouts);
-            }
-            return true;
-        } catch (error) {
-            console.error('Error saving workouts to server:', error);
-            return false;
-        }
+        return {
+            id: train.id.toString(),
+            date: dateString,
+            day: this.getDayOfWeek(date),
+            category: train.typetrain,
+            timeFrom: this.formatTimeWithoutSeconds(train.time_train),
+            timeTo: this.formatTimeWithoutSeconds(train.end_time),
+            exercises: Array.isArray(train.exercises) ? train.exercises : [],
+            completed: train.is_ready || false,
+            createdAt: train.date_train_time,
+            // Сохраняем оригинальные данные для обновлений
+            originalData: train
+        };
     },
 
-    // Очистка тренировок при выходе
-    clearWorkouts() {
-        this.workouts = {};
-        this.renderWorkouts();
-        this.renderTodayWorkout();
+    // Форматирование времени без секунд
+    formatTimeWithoutSeconds(timeString) {
+        if (!timeString) return '';
+        // Убираем секунды если они есть (формат HH:MM:SS -> HH:MM)
+        return timeString.split(':').slice(0, 2).join(':');
+    },
+
+    // Получение дня недели
+    getDayOfWeek(date) {
+        const days = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+        return days[date.getDay()];
+    },
+
+    // Форматирование даты в формат DD.MM.YYYY
+    formatDate(dateString) {
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}.${month}.${year}`;
     },
 
     // Настройка обработчиков событий
     setupEventListeners() {
         // Форма добавления тренировки
-        document.getElementById('addWorkoutForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleAddWorkout(e.target);
-        });
+        const addWorkoutForm = document.getElementById('addWorkoutForm');
+        if (addWorkoutForm) {
+            addWorkoutForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleAddWorkout();
+            });
+        }
 
         // Кнопка добавления упражнения
-        document.getElementById('addExerciseBtn').addEventListener('click', () => {
-            this.addExerciseField();
-        });
+        const addExerciseBtn = document.getElementById('addExerciseBtn');
+        if (addExerciseBtn) {
+            addExerciseBtn.addEventListener('click', () => {
+                this.addExerciseField();
+            });
+        }
 
         // Кнопка отмены
-        document.getElementById('cancelWorkoutBtn').addEventListener('click', () => {
-            this.closeModals();
-        });
+        const cancelBtn = document.getElementById('cancelWorkoutBtn');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => {
+                this.closeModals();
+            });
+        }
     },
 
     // Показать модальное окно добавления тренировки
@@ -130,8 +152,11 @@ const WorkoutManager = {
         
         container.insertAdjacentHTML('beforeend', exerciseHTML);
         
-        // Добавляем обработчик для кнопки удаления
+        // Автоматическая прокрутка к новому упражнению
         const lastExercise = container.lastElementChild;
+        lastExercise.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+        // Добавляем обработчик для кнопки удаления
         lastExercise.querySelector('.remove-exercise').addEventListener('click', () => {
             lastExercise.remove();
             this.renumberExercises();
@@ -149,14 +174,13 @@ const WorkoutManager = {
     },
 
     // Обработка добавления тренировки
-    async handleAddWorkout(form) {
+    async handleAddWorkout() {
         if (!Auth.currentUser) {
             alert('Пожалуйста, войдите в систему');
             return;
         }
 
         const date = document.getElementById('workoutDate').value;
-        const day = document.getElementById('workoutDay').value;
         const category = document.getElementById('workoutCategory').value;
         const timeFrom = document.getElementById('workoutTimeFrom').value;
         const timeTo = document.getElementById('workoutTimeTo').value;
@@ -174,80 +198,49 @@ const WorkoutManager = {
             });
         });
 
-        // Создаем тренировку
-        const workout = {
-            id: Date.now().toString(),
-            date,
-            day,
-            category,
-            timeFrom,
-            timeTo,
-            exercises,
-            completed: false,
-            createdAt: new Date().toISOString()
-        };
-
-        // Сохраняем тренировку
-        if (!this.workouts[date]) {
-            this.workouts[date] = [];
+        // Валидация
+        if (!date || !category || !timeFrom || !timeTo || exercises.length === 0) {
+            alert('Пожалуйста, заполните все поля');
+            return;
         }
-        this.workouts[date].push(workout);
-        
-        await this.saveWorkouts();
-        this.closeModals();
-        this.loadWorkouts();
-        
-        if (typeof UI !== 'undefined') {
-            UI.showNotification('Тренировка успешно добавлена!', 'success');
+
+        try {
+            // Подготавливаем данные для бэкенда
+            const workoutData = {
+                client_id: Auth.currentUser.id, // ID из JWT токена
+                typetrain: category,
+                date_train_time: new Date(date + 'T' + timeFrom).toISOString(),
+                time_train: timeFrom + ':00', // Добавляем секунды
+                end_time: timeTo + ':00',     // Добавляем секунды
+                exercises: exercises,
+                is_ready: false
+            };
+
+            console.log('Sending workout data:', workoutData);
+
+            // Отправляем на бэкенд
+            const result = await API.addWorkout(workoutData);
+            console.log('Workout added successfully:', result);
+
+            this.closeModals();
+            
+            // Перезагружаем тренировки
+            await this.loadWorkouts();
+            
+            if (typeof UI !== 'undefined') {
+                UI.showNotification('Тренировка успешно добавлена!', 'success');
+            }
+        } catch (error) {
+            console.error('Error adding workout:', error);
+            alert('Ошибка при добавлении тренировки: ' + error.message);
         }
-    },
-
-    // Отметить тренировку как выполненную
-    async toggleWorkoutCompletion(workoutId, date) {
-        const workout = this.workouts[date]?.find(w => w.id === workoutId);
-        if (workout) {
-            workout.completed = !workout.completed;
-            await this.saveWorkouts();
-            this.loadWorkouts();
-        }
-    },
-
-    // Получить тренировки на определенную дату
-    getWorkoutsByDate(date) {
-        return this.workouts[date] || [];
-    },
-
-    // Получить тренировку на сегодня
-    getTodayWorkout() {
-        const today = new Date().toISOString().split('T')[0];
-        return this.getWorkoutsByDate(today)[0] || null;
-    },
-
-    // Получить тренировки на неделю
-    getWeekWorkouts() {
-        const weekWorkouts = {};
-        const days = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
-        
-        days.forEach(day => {
-            weekWorkouts[day] = this.findWorkoutByDay(day);
-        });
-        
-        return weekWorkouts;
-    },
-
-    // Найти тренировку по дню недели
-    findWorkoutByDay(day) {
-        for (const date in this.workouts) {
-            const workoutsOnDate = this.workouts[date];
-            const workout = workoutsOnDate.find(w => w.day === day);
-            if (workout) return workout;
-        }
-        return null;
     },
 
     // Рендер тренировок
     renderWorkouts() {
         const weekScroll = document.getElementById('weekScroll');
+        if (!weekScroll) return;
+
         const weekWorkouts = this.getWeekWorkouts();
         const days = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
         
@@ -289,15 +282,6 @@ const WorkoutManager = {
         
         // Добавляем обработчики для карточек
         this.setupDayCardListeners();
-        
-        // Обновляем слайдер после рендеринга
-        if (typeof UI !== 'undefined') {
-            setTimeout(() => {
-                UI.createSliderIndicators();
-                UI.updateNavButtons();
-                UI.setupDragScroll(weekScroll);
-            }, 100);
-        }
     },
 
     // Рендер сегодняшней тренировки
@@ -306,6 +290,8 @@ const WorkoutManager = {
         const todayCategory = document.getElementById('todayCategory');
         const todayExercises = document.getElementById('todayExercises');
         
+        if (!todayCategory || !todayExercises) return;
+
         if (todayWorkout) {
             todayCategory.textContent = todayWorkout.category;
             
@@ -329,6 +315,29 @@ const WorkoutManager = {
         }
     },
 
+    // Получить тренировки на неделю
+    getWeekWorkouts() {
+        const weekWorkouts = {};
+        const days = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
+        
+        days.forEach(day => {
+            weekWorkouts[day] = this.findWorkoutByDay(day);
+        });
+        
+        return weekWorkouts;
+    },
+
+    // Найти тренировку по дню недели
+    findWorkoutByDay(day) {
+        return this.workouts.find(w => w.day === day);
+    },
+
+    // Получить тренировку на сегодня
+    getTodayWorkout() {
+        const today = new Date().toISOString().split('T')[0];
+        return this.workouts.find(w => w.date === today);
+    },
+
     // Настройка обработчиков для карточек дней
     setupDayCardListeners() {
         document.querySelectorAll('.day-card').forEach(card => {
@@ -341,30 +350,18 @@ const WorkoutManager = {
                 }
             });
         });
-
-        // Обработчики для галочек выполнения
-        document.querySelectorAll('.checkmark').forEach(checkmark => {
-            checkmark.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const card = e.target.closest('.day-card');
-                const workoutId = card.dataset.workoutId;
-                const date = card.dataset.date;
-                
-                if (workoutId && date) {
-                    this.toggleWorkoutCompletion(workoutId, date);
-                }
-            });
-        });
     },
 
     // Показать детальную информацию о тренировке
     showWorkoutDetail(workoutId, date) {
-        const workout = this.workouts[date]?.find(w => w.id === workoutId);
+        const workout = this.workouts.find(w => w.id === workoutId && w.date === date);
         if (!workout) return;
 
         const detailContent = document.getElementById('detailContent');
         const workoutDetail = document.getElementById('workoutDetail');
         
+        if (!detailContent || !workoutDetail) return;
+
         let exercisesHTML = '';
         workout.exercises.forEach((exercise, index) => {
             exercisesHTML += `
@@ -382,11 +379,7 @@ const WorkoutManager = {
             </div>
             <div class="detail-item">
                 <span class="detail-label">Дата:</span>
-                <span class="detail-value">${workout.date}</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">День недели:</span>
-                <span class="detail-value">${workout.day}</span>
+                <span class="detail-value">${this.formatDate(workout.date)}</span>
             </div>
             <div class="detail-item">
                 <span class="detail-label">Количество упражнений:</span>
@@ -414,5 +407,12 @@ const WorkoutManager = {
         document.querySelectorAll('.modal').forEach(modal => {
             modal.style.display = 'none';
         });
+    },
+
+    // Очистка тренировок при выходе
+    clearWorkouts() {
+        this.workouts = [];
+        this.renderWorkouts();
+        this.renderTodayWorkout();
     }
 };

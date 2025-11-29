@@ -129,13 +129,12 @@ const Auth = {
             this.updateUI();
             // Обновляем данные на странице
             if (typeof WorkoutManager !== 'undefined') {
-                WorkoutManager.loadWorkouts();
+                await WorkoutManager.loadWorkouts(); // Добавьте await
             }
             if (typeof UI !== 'undefined') {
                 UI.showNotification('Успешный вход!', 'success');
             }
-        } else {
-            alert(result.message);
+        
         }
     },
 

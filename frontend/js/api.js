@@ -128,5 +128,40 @@ const API = {
     // Выход
     logout() {
         this.removeToken();
-    }
+    },
+
+
+    // Добавление новой тренировки
+    async addWorkout(workoutData) {
+        try {
+            const response = await fetch(`http://localhost:8086/client/new_trainer`, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify(workoutData)
+            });
+
+            return await this.handleResponse(response);
+        } catch (error) {
+            console.error('Add workout error:', error);
+            throw error;
+        }
+    },
+
+    // Получение тренировок пользователя
+    async getMyWorkouts() {
+        try {
+            const response = await fetch(`http://localhost:8086/client/my_trains`, {
+                method: 'GET',
+                headers: this.getHeaders()
+            });
+
+            return await this.handleResponse(response);
+        } catch (error) {
+            console.error('Get workouts error:', error);
+            throw error;
+        }
+    },
+
+    
+
 };

@@ -56,6 +56,7 @@ services:
       - auth-network
       - db-network
       - trainer-network
+      - frontend-network
     
   frontend:
     build: ./frontend

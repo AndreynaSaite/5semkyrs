@@ -119,6 +119,32 @@ body {
 
 .exercises-list {
     margin-top: 1rem;
+    max-height: 300px; /* Ограничиваем высоту */
+    overflow-y: auto;  /* Добавляем вертикальную прокрутку */
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 15px;
+    background: #f9f9f9;
+}
+
+/* Стили для полосы прокрутки */
+.exercises-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.exercises-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.exercises-list::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.exercises-list::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }
 
 .exercise-item {
@@ -325,6 +351,7 @@ body {
 }
 
 .modal-content {
+    width: 100%;
     background-color: white;
     margin: 5% auto;
     padding: 2rem;
@@ -337,6 +364,31 @@ body {
 
 .modal-content.large {
     max-width: 700px;
+    max-height: 85vh; /* Ограничиваем максимальную высоту */
+    overflow: hidden; /* Скрываем переполнение */
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto; /* Добавляем прокрутку для контента */
+    padding-right: 5px; /* Отступ для полосы прокрутки */
+}
+
+/* Стили для полосы прокрутки модального окна */
+.modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }
 
 @keyframes modalAppear {
