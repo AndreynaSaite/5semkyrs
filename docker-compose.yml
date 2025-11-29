@@ -23,6 +23,8 @@ services:
       - "80:80"
     networks:
       - auth-network
+      - trainer-network
+      - frontend-network
     depends_on:
       - auth-service
     volumes:
