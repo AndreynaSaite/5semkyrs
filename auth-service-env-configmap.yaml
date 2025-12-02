@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: auth-service-env
+  labels:
+    app: auth-service
+data:
+  APP_HOST: "0.0.0.0"
+  APP_PORT: "8085"
+  DB_HOST: "db"
+  DB_NAME: "postgres"
+  DB_PASSWORD: "test"
+  DB_PORT: "5432"
+  DB_USERNAME: "test"
+  JWT_ALGRORITHM: "HS256"
+  JWT_SECRET_KEY: "a-string-secret-at-least-256-bits-long"

@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  labels:
+    app: auth-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+        - name: auth-service
+          image: andrey795/5kurs:auth-service
+          ports:
+            - containerPort: 8085
+          resources:
+            requests:
+              cpu: 200m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          env:
+            - name: APP_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-service-env
+                  key: APP_HOST
+            - name: APP_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-service-env
+                  key: APP_PORT
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-service-env
+                  key: DB_HOST
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-service-env
+                  key: DB_NAME
+            - name: DB_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-service-env
+                  key: DB_PASSWORD
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-service-env
+                  key: DB_PORT
+            - name: DB_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-service-env
+                  key: DB_USERNAME
+            - name: JWT_ALGRORITHM
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-service-env
+                  key: JWT_ALGRORITHM
+            - name: JWT_SECRET_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: auth-service-env
+                  key: JWT_SECRET_KEY
+      restartPolicy: Always
