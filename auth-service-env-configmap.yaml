@@ -7,7 +7,7 @@ metadata:
 data:
   APP_HOST: "0.0.0.0"
   APP_PORT: "8085"
-  DB_HOST: "db"
+  DB_HOST: "192.168.0.105"
   DB_NAME: "postgres"
   DB_PASSWORD: "test"
   DB_PORT: "5432"
