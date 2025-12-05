@@ -1,0 +1,82 @@
+
+services:
+  db:
+    container_name: db
+    image: postgres:17.2
+    ports:
+      - "5432:5432"
+    networks:
+      - db-network
+      - auth-network
+      - trainer-network
+    environment:
+      POSTGRES_USER: ${PGS_USER}
+      POSTGRES_DB: ${PGS_DB}
+      POSTGRES_PASSWORD: ${PGS_PASSWORD}
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - db-data:/var/lib/postgresql/data
+  api-gateway:
+    build: ./API_gateway
+    container_name: api-gateway
+    ports:
+      - "80:80"
+    networks:
+      - auth-network
+      - trainer-network
+      - frontend-network
+    depends_on:
+      - auth-service
+
+  auth-service:
+    container_name: "auth-service"
+    build: ./auth-service
+    ports:
+      - "8085:8085"
+    env_file:
+      - ./auth-service/.env
+    depends_on:
+      - db
+    networks:
+      - auth-network
+      - db-network
+      - trainer-network
+      - frontend-network
+
+  trainer-service:
+    container_name: "t-service"
+    build: ./t-service
+    ports:
+      - "8086:8086"
+    env_file:
+      - ./t-service/.env
+    depends_on:
+      - db
+    networks:
+      - auth-network
+      - db-network
+      - trainer-network
+      - frontend-network
+    
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    container_name: frontend_app
+    restart: unless-stopped
+
+    networks:
+      - auth-network
+      - frontend-network
+      - trainer-network
+
+
+
+volumes:
+  db-data:
+
+networks:
+  auth-network:
+  db-network:
+  trainer-network:
+  frontend-network:
